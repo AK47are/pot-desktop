@@ -95,6 +95,27 @@ export default function Translate() {
         const items = reorder(translateServiceInstanceList, result.source.index, result.destination.index);
         setTranslateServiceInstanceList(items);
     };
+
+    const togglePin = () => {
+        if (pined) {
+            if (closeOnBlur) {
+                unlisten = listenBlur();
+            }
+            appWindow.setAlwaysOnTop(false);
+        } else {
+            unlistenBlur();
+            appWindow.setAlwaysOnTop(true);
+        }
+        setPined(!pined);
+    };
+
+    // 监听置顶切换事件
+    useEffect(() => {
+        const unlistenPin = listen('toggle-pin', togglePin);
+        return () => {
+            unlistenPin.then((f) => f());
+        };
+    }, [pined, closeOnBlur]);
     // 是否自动关闭窗口
     useEffect(() => {
         if (closeOnBlur !== null && !closeOnBlur) {

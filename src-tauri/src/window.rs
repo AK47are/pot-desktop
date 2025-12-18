@@ -409,3 +409,17 @@ pub fn updater_window() {
     window.set_size(tauri::LogicalSize::new(600, 400)).unwrap();
     window.center().unwrap();
 }
+
+pub fn toggle_window_pin() {
+    let app_handle = APP.get().unwrap();
+    let windows = app_handle.windows();
+
+    // 遍历所有窗口，找到焦点窗口
+    for (_, window) in windows {
+        if window.is_focused().unwrap_or(false) {
+            // 发送 toggle-pin 事件给焦点窗口
+            let _ = window.emit("toggle-pin", {});
+            break;
+        }
+    }
+}

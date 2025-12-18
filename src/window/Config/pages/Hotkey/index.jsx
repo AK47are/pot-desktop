@@ -50,6 +50,7 @@ export default function Hotkey() {
     const [inputTranslate, setInputTranslate] = useConfig('hotkey_input_translate', '');
     const [ocrRecognize, setOcrRecognize] = useConfig('hotkey_ocr_recognize', '');
     const [ocrTranslate, setOcrTranslate] = useConfig('hotkey_ocr_translate', '');
+    const [togglePin, setTogglePin] = useConfig('hotkey_toggle_pin', '');
 
     const { t } = useTranslation();
     const toastStyle = useToastStyle();
@@ -233,6 +234,37 @@ export default function Hotkey() {
                                     className={`${ocrTranslate === '' && 'hidden'}`}
                                     onPress={() => {
                                         registerHandler('hotkey_ocr_translate', ocrTranslate);
+                                    }}
+                                >
+                                    {t('common.ok')}
+                                </Button>
+                            }
+                        />
+                    )}
+                </div>
+                <div className='config-item'>
+                    <h3 className='my-auto'>{t('config.hotkey.toggle_pin')}</h3>
+                    {togglePin !== null && (
+                        <Input
+                            type='hotkey'
+                            variant='bordered'
+                            value={togglePin}
+                            label={t('config.hotkey.set_hotkey')}
+                            className='max-w-[50%]'
+                            onKeyDown={(e) => {
+                                keyDown(e, setTogglePin);
+                            }}
+                            onFocus={() => {
+                                unregister(togglePin);
+                                setTogglePin('');
+                            }}
+                            endContent={
+                                <Button
+                                    size='sm'
+                                    variant='flat'
+                                    className={`${togglePin === '' && 'hidden'}`}
+                                    onPress={() => {
+                                        registerHandler('hotkey_toggle_pin', togglePin);
                                     }}
                                 >
                                     {t('common.ok')}
