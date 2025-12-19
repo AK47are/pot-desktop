@@ -5,7 +5,7 @@ import { appWindow, currentMonitor, PhysicalSize, PhysicalPosition } from '@taur
 import { appConfigDir, join } from '@tauri-apps/api/path';
 import { convertFileSrc } from '@tauri-apps/api/tauri';
 import { Spacer, Button } from '@nextui-org/react';
-import { AiFillCloseCircle } from 'react-icons/ai';
+import { AiFillCloseCircle, AiOutlineExpand, AiOutlineCompress } from 'react-icons/ai';
 import React, { useState, useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { BsPinFill, BsArrowUp } from 'react-icons/bs';
@@ -17,6 +17,8 @@ import { osType } from '../../utils/env';
 import { useConfig } from '../../hooks';
 import { store } from '../../utils/store';
 import { info } from 'tauri-plugin-log-api';
+import { app } from '@tauri-apps/api';
+
 
 let blurTimeout = null;
 let resizeTimeout = null;
@@ -83,6 +85,7 @@ export default function Translate() {
     const [collectionServiceInstanceList] = useConfig('collection_service_list', []);
     const [hideLanguage] = useConfig('hide_language', false);
     const [pined, setPined] = useState(false);
+    const [maximized, setMaximized] = useState(false);
     const [pluginList, setPluginList] = useState(null);
     const [serviceInstanceConfigMap, setServiceInstanceConfigMap] = useState(null);
     
@@ -265,6 +268,7 @@ export default function Translate() {
         }
     };
     
+    
     // 是否自动关闭窗口
     useEffect(() => {
         if (closeOnBlur !== null && !closeOnBlur) {
@@ -281,6 +285,60 @@ export default function Translate() {
         }
     }, [alwaysOnTop]);
     
+    
+    //设置默认窗口最大化
+    useEffect(() => {
+        const setDefaultMaximize = async () => {
+            try {
+                const isMaximized = await appWindow.isMaximized();
+                if (!isMaximized) {
+                    await appWindow.maximize();
+                    setMaximized(true);
+                }
+            } catch (error) {
+                console.error("Failed to maximize window:", error);
+            }
+        };
+        
+        // 延迟执行以确保窗口完全初始化
+        const timeoutId = setTimeout(() => {
+            setDefaultMaximize();
+        }, 100);
+        
+        return () => clearTimeout(timeoutId);
+    }, []);
+    
+    // 监听窗口最大化
+    useEffect(() => {
+        const unlistenResized = listen('tauri://resize', async () => {
+            try {
+                const isMaximized = await appWindow.isMaximized();
+                setMaximized(isMaximized);
+            } catch (error) {
+                console.error("Failed to check window maximized state:", error);
+            }
+        });
+        
+        // 初始化时检查窗口状态
+        const initWindowStatus = async () => {
+            try {
+                const isMaximized = await appWindow.isMaximized();
+                setMaximized(isMaximized);
+            } catch (error) {
+                console.error("Failed to initialize window state:", error);
+            }
+        };
+        
+        // 延迟执行以确保窗口完全初始化
+        const timeoutId = setTimeout(() => {
+            initWindowStatus();
+        }, 100);
+        
+        return () => {
+            clearTimeout(timeoutId);
+            unlistenResized.then((f) => f()).catch(console.error);
+        };
+    }, []);
     // 保存窗口位置
     useEffect(() => {
         if (windowPosition !== null && windowPosition === 'pre_state' && !isSidebarMode) {
@@ -410,30 +468,31 @@ export default function Translate() {
                     className='fixed top-[5px] left-[5px] right-[5px] h-[30px]'
                     data-tauri-drag-region='true'
                 />
-                <div className={`h-[35px] w-full flex ${osType === 'Darwin' ? 'justify-end' : 'justify-between'}`}>
+                <div className={`h-[35px] w-full flex ${osType === 'Darwin' ? 'justify-end' : 'justify-end'}`}>
                     <div className="flex gap-2">
+                        <div className="flex">
                         <Button
-                            isIconOnly
-                            size='sm'
-                            variant='flat'
-                            disableAnimation
-                            className='my-auto bg-transparent'
-                            onPress={() => {
-                                if (pined && !isSidebarMode) {
-                                    if (closeOnBlur) {
-                                        unlisten = listenBlur();
-                                    }
-                                    appWindow.setAlwaysOnTop(false);
+                                isIconOnly
+                                size='sm'
+                                variant='flat'
+                                disableAnimation
+                                className='my-auto bg-transparent'
+                                onPress={() => {
+                                    if (pined && !isSidebarMode) {
+                                        if (closeOnBlur) {
+                                            unlisten = listenBlur();
+                                        }
+                                        appWindow.setAlwaysOnTop(false);
                                     setPined(false);
-                                } else if (!isSidebarMode) {
-                                    unlistenBlur();
-                                    appWindow.setAlwaysOnTop(true);
+                                    } else if (!isSidebarMode) {
+                                        unlistenBlur();
+                                        appWindow.setAlwaysOnTop(true);
                                     setPined(true);
-                                }
-                            }}
-                        >
-                            <BsPinFill className={`text-[20px] ${pined ? 'text-primary' : 'text-default-400'}`} />
-                        </Button>
+                                    }
+                                    }}
+                            >
+                                <BsPinFill className={`text-[20px] ${pined ? 'text-primary' : 'text-default-400'}`} />
+                            </Button>
                         
                         {/* 新增：侧拉按钮 */}
                         <Button
@@ -451,18 +510,42 @@ export default function Translate() {
                         </Button>
                     </div>
                     
-                    <Button
-                        isIconOnly
-                        size='sm'
-                        variant='flat'
-                        disableAnimation
-                        className={`my-auto ${osType === 'Darwin' && 'hidden'} bg-transparent`}
-                        onPress={() => {
-                            void appWindow.close();
-                        }}
-                    >
-                        <AiFillCloseCircle className='text-[20px] text-default-400' />
-                    </Button>
+                        {/* 最大化按钮 */}
+                        <Button
+                            isIconOnly
+                            size='sm'
+                            variant='flat'
+                            disableAnimation
+                            className={`my-auto ${osType === 'Darwin' && 'hidden'} bg-transparent`}
+                            onPress={async () => {
+                                if (maximized) {
+                                    await appWindow.unmaximize();
+                                } else {
+                                    await appWindow.maximize();
+                                }
+                                setMaximized(!maximized);
+                            }}
+                        >
+                            {maximized ? (
+                                <AiOutlineCompress className='text-[20px] text-default-400' />
+                            ) : (
+                                <AiOutlineExpand className='text-[20px] text-default-400' />
+                            )}
+                        </Button>
+
+                        <Button
+                            isIconOnly
+                            size='sm'
+                            variant='flat'
+                            disableAnimation
+                            className={`my-auto ${osType === 'Darwin' && 'hidden'} bg-transparent`}
+                            onPress={() => {
+                                void appWindow.close();
+                            }}
+                        >
+                            <AiFillCloseCircle className='text-[20px] text-default-400' />
+                        </Button>
+                    </div>
                 </div>
                 
                 {/* 修改：移除条件渲染，改用CSS类控制可见性 */}
