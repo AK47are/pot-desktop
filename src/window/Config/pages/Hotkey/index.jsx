@@ -128,7 +128,12 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setSelectionTranslate);
+                                if (e.key === 'Enter' && selectionTranslate !== '') {
+                                    registerHandler('hotkey_selection_translate', selectionTranslate);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setSelectionTranslate);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(selectionTranslate);
@@ -159,7 +164,12 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setInputTranslate);
+                                if (e.key === 'Enter' && inputTranslate !== '') {
+                                    registerHandler('hotkey_input_translate', inputTranslate);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setInputTranslate);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(inputTranslate);
@@ -190,7 +200,12 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setOcrRecognize);
+                                if (e.key === 'Enter' && ocrRecognize !== '') {
+                                    registerHandler('hotkey_ocr_recognize', ocrRecognize);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setOcrRecognize);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(ocrRecognize);
@@ -221,7 +236,12 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setOcrTranslate);
+                                if (e.key === 'Enter' && ocrTranslate !== '') {
+                                    registerHandler('hotkey_ocr_translate', ocrTranslate);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setOcrTranslate);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(ocrTranslate);
@@ -252,7 +272,12 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setTogglePin);
+                                if (e.key === 'Enter' && togglePin !== '') {
+                                    registerHandler('hotkey_toggle_pin', togglePin);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setTogglePin);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(togglePin);
