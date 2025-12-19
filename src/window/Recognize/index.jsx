@@ -86,6 +86,26 @@ export default function Recognize() {
         }
         setServiceInstanceConfigMap({ ...config });
     };
+    const togglePin = () => {
+        if (pined) {
+            if (closeOnBlur) {
+                unlisten = listenBlur();
+            }
+            appWindow.setAlwaysOnTop(false);
+        } else {
+            unlistenBlur();
+            appWindow.setAlwaysOnTop(true);
+        }
+        setPined(!pined);
+    };
+
+    // 监听 toggle-pin 信号
+    useEffect(() => {
+        const unlistenPin = listen('toggle-pin', togglePin);
+        return () => {
+            unlistenPin.then((f) => f());
+        };
+    }, [pined, closeOnBlur]);
     useEffect(() => {
         if (serviceInstanceList !== null) {
             loadServiceInstanceConfigMap();

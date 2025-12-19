@@ -50,6 +50,14 @@ export default function Hotkey() {
     const [inputTranslate, setInputTranslate] = useConfig('hotkey_input_translate', '');
     const [ocrRecognize, setOcrRecognize] = useConfig('hotkey_ocr_recognize', '');
     const [ocrTranslate, setOcrTranslate] = useConfig('hotkey_ocr_translate', '');
+    const [togglePin, setTogglePin] = useConfig('hotkey_toggle_pin', '');
+
+    // 纪录已成功注册的快捷键
+    const [registeredSelectionTranslate, setRegisteredSelectionTranslate] = React.useState(null);
+    const [registeredInputTranslate, setRegisteredInputTranslate] = React.useState(null);
+    const [registeredOcrRecognize, setRegisteredOcrRecognize] = React.useState(null);
+    const [registeredOcrTranslate, setRegisteredOcrTranslate] = React.useState(null);
+    const [registeredTogglePin, setRegisteredTogglePin] = React.useState(null);
 
     const { t } = useTranslation();
     const toastStyle = useToastStyle();
@@ -104,6 +112,24 @@ export default function Hotkey() {
                 }).then(
                     () => {
                         toast.success(t('config.hotkey.success'), { style: toastStyle });
+                        // 更新注册的快捷键值
+                        switch (name) {
+                            case 'hotkey_selection_translate':
+                                setRegisteredSelectionTranslate(key);
+                                break;
+                            case 'hotkey_input_translate':
+                                setRegisteredInputTranslate(key);
+                                break;
+                            case 'hotkey_ocr_recognize':
+                                setRegisteredOcrRecognize(key);
+                                break;
+                            case 'hotkey_ocr_translate':
+                                setRegisteredOcrTranslate(key);
+                                break;
+                            case 'hotkey_toggle_pin':
+                                setRegisteredTogglePin(key);
+                                break;
+                        }
                     },
                     (e) => {
                         toast.error(e, { style: toastStyle });
@@ -127,10 +153,22 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setSelectionTranslate);
+                                if (e.key === 'Enter' && selectionTranslate !== '') {
+                                    registerHandler('hotkey_selection_translate', selectionTranslate);
+                                    e.currentTarget.blur();
+                                } else if (e.key === 'Escape') {
+                                    registerHandler('hotkey_selection_translate', registeredSelectionTranslate);
+                                    setSelectionTranslate(registeredSelectionTranslate);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setSelectionTranslate);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(selectionTranslate);
+                                // 同步 selectionTranslate 初值
+                                if (registeredSelectionTranslate === null)
+                                    setRegisteredSelectionTranslate(selectionTranslate);
                                 setSelectionTranslate('');
                             }}
                             endContent={
@@ -158,10 +196,21 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setInputTranslate);
+                                if (e.key === 'Enter' && inputTranslate !== '') {
+                                    registerHandler('hotkey_input_translate', inputTranslate);
+                                    e.currentTarget.blur();
+                                } else if (e.key === 'Escape') {
+                                    registerHandler('hotkey_input_translate', registeredInputTranslate);
+                                    setInputTranslate(registeredInputTranslate);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setInputTranslate);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(inputTranslate);
+                                // 同步 input_translate 初值
+                                if (registeredInputTranslate === null) setRegisteredInputTranslate(inputTranslate);
                                 setInputTranslate('');
                             }}
                             endContent={
@@ -189,10 +238,21 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setOcrRecognize);
+                                if (e.key === 'Enter' && ocrRecognize !== '') {
+                                    registerHandler('hotkey_ocr_recognize', ocrRecognize);
+                                    e.currentTarget.blur();
+                                } else if (e.key === 'Escape') {
+                                    registerHandler('hotkey_ocr_recognize', registeredOcrRecognize);
+                                    setOcrRecognize(registeredOcrRecognize);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setOcrRecognize);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(ocrRecognize);
+                                // 同步 ocrRecognize 初值
+                                if (registeredOcrRecognize === null) setRegisteredOcrRecognize(ocrRecognize);
                                 setOcrRecognize('');
                             }}
                             endContent={
@@ -220,10 +280,21 @@ export default function Hotkey() {
                             label={t('config.hotkey.set_hotkey')}
                             className='max-w-[50%]'
                             onKeyDown={(e) => {
-                                keyDown(e, setOcrTranslate);
+                                if (e.key === 'Enter' && ocrTranslate !== '') {
+                                    registerHandler('hotkey_ocr_translate', ocrTranslate);
+                                    e.currentTarget.blur();
+                                } else if (e.key === 'Escape') {
+                                    registerHandler('hotkey_ocr_translate', registeredOcrTranslate);
+                                    setOcrTranslate(registeredOcrTranslate);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setOcrTranslate);
+                                }
                             }}
                             onFocus={() => {
                                 unregister(ocrTranslate);
+                                // 同步 ocrTranslate 初值
+                                if (registeredOcrTranslate === null) setRegisteredOcrTranslate(ocrTranslate);
                                 setOcrTranslate('');
                             }}
                             endContent={
@@ -233,6 +304,48 @@ export default function Hotkey() {
                                     className={`${ocrTranslate === '' && 'hidden'}`}
                                     onPress={() => {
                                         registerHandler('hotkey_ocr_translate', ocrTranslate);
+                                    }}
+                                >
+                                    {t('common.ok')}
+                                </Button>
+                            }
+                        />
+                    )}
+                </div>
+                <div className='config-item'>
+                    <h3 className='my-auto'>{t('config.hotkey.toggle_pin')}</h3>
+                    {togglePin !== null && (
+                        <Input
+                            type='hotkey'
+                            variant='bordered'
+                            value={togglePin}
+                            label={t('config.hotkey.set_hotkey')}
+                            className='max-w-[50%]'
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && togglePin !== '') {
+                                    registerHandler('hotkey_toggle_pin', togglePin);
+                                    e.currentTarget.blur();
+                                } else if (e.key === 'Escape') {
+                                    registerHandler('hotkey_toggle_pin', registeredTogglePin);
+                                    setTogglePin(registeredTogglePin);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setTogglePin);
+                                }
+                            }}
+                            onFocus={() => {
+                                unregister(togglePin);
+                                // 同步 togglePin 初值
+                                if (registeredTogglePin === null) setRegisteredTogglePin(togglePin);
+                                setTogglePin('');
+                            }}
+                            endContent={
+                                <Button
+                                    size='sm'
+                                    variant='flat'
+                                    className={`${togglePin === '' && 'hidden'}`}
+                                    onPress={() => {
+                                        registerHandler('hotkey_toggle_pin', togglePin);
                                     }}
                                 >
                                     {t('common.ok')}

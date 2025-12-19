@@ -22,6 +22,7 @@ import detect from '../../../../utils/lang_detect';
 import { store } from '../../../../utils/store';
 import { info } from 'tauri-plugin-log-api';
 import { debug } from 'tauri-plugin-log-api';
+import * as builtinCollectionServices from '../../../../services/collection';
 
 export const sourceTextAtom = atom('');
 export const detectLanguageAtom = atom('');
@@ -48,6 +49,7 @@ export default function SourceArea(props) {
     const { t } = useTranslation();
     const textAreaRef = useRef();
     const speak = useVoice();
+    const [collectionServiceList] = useConfig('collection_service_list', []);
 
     const handleNewText = async (text) => {
         text = text.trim();
@@ -285,14 +287,17 @@ export default function SourceArea(props) {
                 });
             }, 1000);
         }
-    }
+    };
 
     const transformVarName = function (str) {
         let str2 = str;
 
         // snake_case to SNAKE_CASE
         if (/_[a-z]/.test(str2)) {
-            str2 = str2.split('_').map(it => it.toLocaleUpperCase()).join('_');
+            str2 = str2
+                .split('_')
+                .map((it) => it.toLocaleUpperCase())
+                .join('_');
         }
         if (str2 !== str) {
             return str2;
@@ -300,7 +305,10 @@ export default function SourceArea(props) {
 
         // SNAKE_CASE to kebab-case
         if (/^[A-Z]+(_[A-Z]+)*$/.test(str2)) {
-            str2 = str2.split('_').map(it => it.toLocaleLowerCase()).join('-');
+            str2 = str2
+                .split('_')
+                .map((it) => it.toLocaleLowerCase())
+                .join('-');
         }
         if (str2 !== str) {
             return str2;
@@ -308,7 +316,10 @@ export default function SourceArea(props) {
 
         // kebab-case to dot.notation
         if (/-/.test(str2)) {
-            str2 = str2.split('-').map(it => it.toLocaleLowerCase()).join('.');
+            str2 = str2
+                .split('-')
+                .map((it) => it.toLocaleLowerCase())
+                .join('.');
         }
         if (str2 !== str) {
             return str2;
@@ -356,9 +367,9 @@ export default function SourceArea(props) {
         }
 
         return str2;
-    }
+    };
     useEffect(() => {
-        textAreaRef.current.addEventListener("keydown", async (event) => {
+        textAreaRef.current.addEventListener('keydown', async (event) => {
             if (event.altKey && event.shiftKey && event.code === 'KeyU') {
                 const originText = textAreaRef.current.value;
                 const selectionStart = textAreaRef.current.selectionStart;
@@ -366,7 +377,8 @@ export default function SourceArea(props) {
                 const selectionText = originText.substring(selectionStart, selectionEnd);
 
                 const convertedText = transformVarName(selectionText);
-                const targetText = originText.substring(0, selectionStart) + convertedText + originText.substring(selectionEnd);
+                const targetText =
+                    originText.substring(0, selectionStart) + convertedText + originText.substring(selectionEnd);
 
                 await changeSourceText(targetText);
                 textAreaRef.current.selectionStart = selectionStart;
@@ -374,7 +386,6 @@ export default function SourceArea(props) {
             }
         });
     }, [textAreaRef]);
-
 
     return (
         <div className={hideSource && windowType !== '[INPUT_TRANSLATE]' && 'hidden'}>
@@ -467,21 +478,92 @@ export default function SourceArea(props) {
                             </Chip>
                         )}
                     </div>
-                    <Tooltip content={t('translate.translate')}>
-                        <Button
-                            size='sm'
-                            color='primary'
-                            variant='light'
-                            isIconOnly
-                            className='text-[14px] font-bold'
-                            startContent={<HiTranslate className='text-[16px]' />}
-                            onPress={() => {
-                                detect_language(sourceText).then(() => {
-                                    syncSourceText();
-                                });
-                            }}
-                        />
-                    </Tooltip>
+                    <ButtonGroup>
+                        <Tooltip content={t('translate.translate')}>
+                            <Button
+                                size='sm'
+                                color='primary'
+                                variant='light'
+                                isIconOnly
+                                className='text-[14px] font-bold'
+                                startContent={<HiTranslate className='text-[16px]' />}
+                                onPress={() => {
+                                    detect_language(sourceText).then(() => {
+                                        syncSourceText();
+                                    });
+                                }}
+                            />
+                        </Tooltip>
+                        {/* available collection service instance */}
+                        {collectionServiceList &&
+                            collectionServiceList.map((collectionServiceInstanceName) => {
+                                return (
+                                    <Button
+                                        key={collectionServiceInstanceName}
+                                        isIconOnly
+                                        variant='light'
+                                        size='sm'
+                                        onPress={async () => {
+                                            if (
+                                                getServiceSouceType(collectionServiceInstanceName) ===
+                                                ServiceSourceType.PLUGIN
+                                            ) {
+                                                const pluginConfig =
+                                                    serviceInstanceConfigMap[collectionServiceInstanceName];
+                                                let [func, utils] = await invoke_plugin(
+                                                    'collection',
+                                                    getServiceName(collectionServiceInstanceName)
+                                                );
+                                                func(sourceText.trim(), '', {
+                                                    config: pluginConfig,
+                                                    utils,
+                                                }).then(
+                                                    (_) => {
+                                                        toast.success(t('translate.add_collection_success'), {
+                                                            style: toastStyle,
+                                                        });
+                                                    },
+                                                    (e) => {
+                                                        toast.error(e.toString(), { style: toastStyle });
+                                                    }
+                                                );
+                                            } else {
+                                                const instanceConfig =
+                                                    serviceInstanceConfigMap[collectionServiceInstanceName];
+                                                builtinCollectionServices[getServiceName(collectionServiceInstanceName)]
+                                                    .collection(sourceText, '', {
+                                                        config: instanceConfig,
+                                                    })
+                                                    .then(
+                                                        (_) => {
+                                                            toast.success(t('translate.add_collection_success'), {
+                                                                style: toastStyle,
+                                                            });
+                                                        },
+                                                        (e) => {
+                                                            toast.error(e.toString(), { style: toastStyle });
+                                                        }
+                                                    );
+                                            }
+                                        }}
+                                    >
+                                        <img
+                                            src={
+                                                getServiceSouceType(collectionServiceInstanceName) ===
+                                                ServiceSourceType.PLUGIN
+                                                    ? pluginList['collection'][
+                                                          getServiceName(collectionServiceInstanceName)
+                                                      ].icon
+                                                    : builtinCollectionServices[
+                                                          getServiceName(collectionServiceInstanceName)
+                                                      ].info.icon
+                                            }
+                                            className='h-[16px] w-[16px]'
+                                        />
+                                    </Button>
+                                );
+                            })}
+                    </ButtonGroup>
                 </CardFooter>
             </Card>
             <Spacer y={2} />

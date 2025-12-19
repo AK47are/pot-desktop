@@ -153,6 +153,7 @@
                 "input_translate": "Text Translation",
                 "ocr_recognize": "Text Recognition",
                 "ocr_translate": "Screenshot Translation",
+                "toggle_pin": "Toggle Pin",
                 "is_register": "The hotkey is already registered",
                 "success": "Hotkey register success",
                 "set_hotkey": "Press to Set Hotkey"
@@ -485,3 +486,4 @@
         }
     }
 }
+
