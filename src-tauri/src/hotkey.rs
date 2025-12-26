@@ -1,6 +1,7 @@
 use crate::config::{get, set};
 use crate::window::{
-    input_translate, ocr_recognize, ocr_translate, selection_translate, toggle_window_pin,
+    add_to_collection, input_translate, ocr_recognize, ocr_translate, selection_translate,
+    toggle_window_pin,
 };
 use crate::APP;
 use log::{info, warn};
@@ -56,6 +57,12 @@ pub fn register_shortcut(shortcut: &str) -> Result<(), String> {
         }
         "hotkey_ocr_recognize" => register(app_handle, "hotkey_ocr_recognize", ocr_recognize, "")?,
         "hotkey_ocr_translate" => register(app_handle, "hotkey_ocr_translate", ocr_translate, "")?,
+        "hotkey_add_to_collection" => register(
+            app_handle,
+            "hotkey_add_to_collection",
+            add_to_collection,
+            "",
+        )?,
         "all" => {
             register(
                 app_handle,
@@ -67,6 +74,12 @@ pub fn register_shortcut(shortcut: &str) -> Result<(), String> {
             register(app_handle, "hotkey_ocr_recognize", ocr_recognize, "")?;
             register(app_handle, "hotkey_ocr_translate", ocr_translate, "")?;
             register(app_handle, "hotkey_toggle_pin", toggle_window_pin, "")?;
+            register(
+                app_handle,
+                "hotkey_add_to_collection",
+                add_to_collection,
+                "",
+            )?;
         }
         _ => {}
     }
@@ -98,6 +111,12 @@ pub fn register_shortcut_by_frontend(name: &str, shortcut: &str) -> Result<(), S
         "hotkey_toggle_pin" => {
             register(app_handle, "hotkey_toggle_pin", toggle_window_pin, shortcut)?
         }
+        "hotkey_add_to_collection" => register(
+            app_handle,
+            "hotkey_add_to_collection",
+            add_to_collection,
+            shortcut,
+        )?,
         _ => {}
     }
     Ok(())

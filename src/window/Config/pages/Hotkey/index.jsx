@@ -51,6 +51,7 @@ export default function Hotkey() {
     const [ocrRecognize, setOcrRecognize] = useConfig('hotkey_ocr_recognize', '');
     const [ocrTranslate, setOcrTranslate] = useConfig('hotkey_ocr_translate', '');
     const [togglePin, setTogglePin] = useConfig('hotkey_toggle_pin', '');
+    const [addToCollection, setAddToCollection] = useConfig('hotkey_add_to_collection', '');
 
     // 纪录已成功注册的快捷键
     const [registeredSelectionTranslate, setRegisteredSelectionTranslate] = React.useState(null);
@@ -58,6 +59,7 @@ export default function Hotkey() {
     const [registeredOcrRecognize, setRegisteredOcrRecognize] = React.useState(null);
     const [registeredOcrTranslate, setRegisteredOcrTranslate] = React.useState(null);
     const [registeredTogglePin, setRegisteredTogglePin] = React.useState(null);
+    const [registeredAddToCollection, setRegisteredAddToCollection] = React.useState(null);
 
     const { t } = useTranslation();
     const toastStyle = useToastStyle();
@@ -128,6 +130,9 @@ export default function Hotkey() {
                                 break;
                             case 'hotkey_toggle_pin':
                                 setRegisteredTogglePin(key);
+                                break;
+                            case 'hotkey_add_to_collection':
+                                setRegisteredAddToCollection(key);
                                 break;
                         }
                     },
@@ -346,6 +351,48 @@ export default function Hotkey() {
                                     className={`${togglePin === '' && 'hidden'}`}
                                     onPress={() => {
                                         registerHandler('hotkey_toggle_pin', togglePin);
+                                    }}
+                                >
+                                    {t('common.ok')}
+                                </Button>
+                            }
+                        />
+                    )}
+                </div>
+                <div className='config-item'>
+                    <h3 className='my-auto'>{t('config.hotkey.add_to_collection')}</h3>
+                    {addToCollection !== null && (
+                        <Input
+                            type='hotkey'
+                            variant='bordered'
+                            value={addToCollection}
+                            label={t('config.hotkey.set_hotkey')}
+                            className='max-w-[50%]'
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && togglePin !== '') {
+                                    registerHandler('hotkey_add_to_collection', addToCollection);
+                                    e.currentTarget.blur();
+                                } else if (e.key === 'Escape') {
+                                    registerHandler('hotkey_add_to_collection', addToCollection);
+                                    setAddToCollection(registeredAddToCollection);
+                                    e.currentTarget.blur();
+                                } else {
+                                    keyDown(e, setAddToCollection);
+                                }
+                            }}
+                            onFocus={() => {
+                                unregister(addToCollection);
+                                // 同步 addToCollection 初值
+                                if (registeredAddToCollection === null) setRegisteredAddToCollection(addToCollection);
+                                setAddToCollection('');
+                            }}
+                            endContent={
+                                <Button
+                                    size='sm'
+                                    variant='flat'
+                                    className={`${addToCollection === '' && 'hidden'}`}
+                                    onPress={() => {
+                                        registerHandler('hotkey_add_to_collection', addToCollection);
                                     }}
                                 >
                                     {t('common.ok')}

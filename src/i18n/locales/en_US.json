@@ -152,6 +152,7 @@
                 "ocr_recognize": "Text Recognition",
                 "ocr_translate": "Screenshot Translation",
                 "toggle_pin": "Toggle Pin",
+                "add_to_collection": "Add to Collection",
                 "is_register": "The hotkey is already registered",
                 "success": "Hotkey register success",
                 "set_hotkey": "Press to Set Hotkey"

@@ -256,6 +256,38 @@ export default function SourceArea(props) {
         textAreaRef.current.style.height = textAreaRef.current.scrollHeight + 'px';
     }, [sourceText]);
 
+    useEffect(() => {
+        const unlisten = listen('add-to-collection', () => {
+            if (!collectionServiceList?.[0]) {
+                toast.error('未找到可用的生词本服务', { style: toastStyle });
+                return;
+            }
+            addToCollection(collectionServiceList[0], sourceText);
+        });
+        return () => unlisten.then((fn) => fn());
+    }, [collectionServiceList, serviceInstanceConfigMap, sourceText, toastStyle]);
+
+    const addToCollection = async (serviceName, text) => {
+        if (!text?.trim()) {
+            toast.error('没有可收藏的文本', { style: toastStyle });
+            return;
+        }
+
+        try {
+            if (getServiceSouceType(serviceName) === ServiceSourceType.PLUGIN) {
+                const config = serviceInstanceConfigMap[serviceName];
+                let [func, utils] = await invoke_plugin('collection', getServiceName(serviceName));
+                await func(text.trim(), '', { config, utils });
+            } else {
+                const config = serviceInstanceConfigMap[serviceName];
+                await builtinCollectionServices[getServiceName(serviceName)].collection(text.trim(), '', { config });
+            }
+            toast.success(t('translate.add_collection_success'), { style: toastStyle });
+        } catch (e) {
+            toast.error(e.toString(), { style: toastStyle });
+        }
+    };
+
     const detect_language = async (text) => {
         setDetectLanguage(await detect(text));
     };
@@ -490,49 +522,7 @@ export default function SourceArea(props) {
                                         isIconOnly
                                         variant='light'
                                         size='sm'
-                                        onPress={async () => {
-                                            if (
-                                                getServiceSouceType(collectionServiceInstanceName) ===
-                                                ServiceSourceType.PLUGIN
-                                            ) {
-                                                const pluginConfig =
-                                                    serviceInstanceConfigMap[collectionServiceInstanceName];
-                                                let [func, utils] = await invoke_plugin(
-                                                    'collection',
-                                                    getServiceName(collectionServiceInstanceName)
-                                                );
-                                                func(sourceText.trim(), '', {
-                                                    config: pluginConfig,
-                                                    utils,
-                                                }).then(
-                                                    (_) => {
-                                                        toast.success(t('translate.add_collection_success'), {
-                                                            style: toastStyle,
-                                                        });
-                                                    },
-                                                    (e) => {
-                                                        toast.error(e.toString(), { style: toastStyle });
-                                                    }
-                                                );
-                                            } else {
-                                                const instanceConfig =
-                                                    serviceInstanceConfigMap[collectionServiceInstanceName];
-                                                builtinCollectionServices[getServiceName(collectionServiceInstanceName)]
-                                                    .collection(sourceText, '', {
-                                                        config: instanceConfig,
-                                                    })
-                                                    .then(
-                                                        (_) => {
-                                                            toast.success(t('translate.add_collection_success'), {
-                                                                style: toastStyle,
-                                                            });
-                                                        },
-                                                        (e) => {
-                                                            toast.error(e.toString(), { style: toastStyle });
-                                                        }
-                                                    );
-                                            }
-                                        }}
+                                        onPress={() => addToCollection(collectionServiceInstanceName, sourceText)}
                                     >
                                         <img
                                             src={
